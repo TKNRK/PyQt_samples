@@ -1,116 +1,118 @@
-import sys
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 import numpy as np
+from agiTest import AGI
 
-class DrawWidget(QWidget):
+class agiWindow(QGraphicsView):
+    def __init__(self, width=500,height=500,size=5):
+        super(agiWindow, self).__init__()
 
-    def __init__(self):
-        super().__init__()
-        #self.px = None
-        #self.py = None
-        #self.points = []
-        #self.psets = []
-        self.initUI()
-        
+        self.m_scene = QGraphicsScene()
+        self.setScene(self.m_scene)
+
+        agi = AGI(width, width-100, 2)
+        print(agi.Pos_scaled)
+        self.width = width
+        self.height = height
+        self.size = size
+        self.node = (agi.Pos_scaled).T
+        self.edge = agi.EdgeList
+
+        self.lines = []
+        self.ellipses = []
+        self.selected = 0
+
+        self.setUp()
+
     def initUI(self):
-        self.setGeometry(500,500,280,270) # 引数(x,y,w,h):(出現位置,幅,高さ)
-        self.setWindowTitle('Drawing Pane')
-        # self.show()
-    """
-    def mousePressEvent(self, event):
-        self.points.append(event.pos())
         self.update()
+
+    def setUp(self, ef = -1):
+        self.m_scene.setSceneRect(0, 0, 800, 800)
+        self.counter = 0
+
+        for n in self.node:
+            item = QGraphicsEllipseItem(*n, 50, 50)
+
+            item.setPen(QPen(Qt.black, 1))
+            item.setBrush(QBrush(Qt.white))
+
+            if ef == self.counter:
+                effect = QGraphicsDropShadowEffect(self)
+                effect.setBlurRadius(8)
+                item.setGraphicsEffect(effect)
+                item.setZValue(1)
+
+            self.m_scene.addItem(item)
+            self.ellipses.append(item)
+
+
+    def mousePressEvent(self, event):
+        self.selected = 1
+        print(self.ellipses)
+        super(agiWindow, self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        self.points.append(event.pos())
-        self.update()
-
-    def mouseReleaseEvent(self, event):
-        self.pressed = False
-        self.psets.append(event.points)
-        self.points = []
-        self.update()
-    """
-    def paintEvent(self, e):
-        node = np.array([
-            [0,0],
-            [10,60],
-            [10,160],
-            [10,210],
-            [10,260]
-        ])
-        edge = np.array([
-            [0, 1],
-            [0, 2],
-            [1, 2],
-            [1, 4],
-            [3, 4]
-        ])
-        qp = QPainter()
-        qp.begin(self)
-        self.drawGraph(qp, edge, node)
-        qp.end()
-
-
-    def drwaGraph(self, qp, edge, node):
-        self.drawLines(qp, edge, node)
-        self.drawEllipses(qp, node)
-
-
-    def drawLines(self, qp, edge, node):
-        pen = QPen(Qt.black, 2, Qt.SolidLine)
-
-        # pen.setStyle(Qt.DashLine)
-        qp.setPen(pen)
-        for e in edge:
-            qp.drawLine(*node[e[0],:],*node[e[1],:]) # 引数(x1,y1,x2,y2) : (x1,y1)から(x2,y2)のラインを引く
-
-    def drawEllipses(selfself, qp, node):
-        brush = QBrush(Qt.SolidPattern)
-
-        #brush.setStyle(Qt.Dense1Pattern)
-        qp.setBrush(brush)
-        for n in node:
-            qp.drawEllipse(*n, 20, 20) # 引数(x,y,w,h) : （左上座標,幅,高さ）となる矩形に内接する円
-
+        pos = event.pos()
+        self.node[self.selected,:] = np.array([pos.x(),pos.y()])
+        self.m_scene.clear()
+        self.ellipses.clear()
+        self.setUp(self.selected)
+        super(agiWindow, self).mouseMoveEvent(event)
 
 class MainWindow(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self,parent=None):
         super(MainWindow, self).__init__(parent)
 
-        self.inputLine = QLineEdit()
-        self.outputLine = QLineEdit()
-        self.outputLine.setReadOnly(True)
+        # グラフ描画領域の埋め込み
+        self.graphDrawer = agiWindow(800, 800)
+        self.graphicsView = self.graphDrawer
 
-        self.drawingP = DrawWidget
-
-        lineLayout = QGridLayout()
-        lineLayout.addWidget(QLabel("num"), 0, 0)
-        lineLayout.addWidget(self.inputLine, 0, 1)
-        lineLayout.addWidget(QLabel("result"), 1, 0)
-        lineLayout.addWidget(self.outputLine, 1, 1)
-
+        # パラメータ領域の埋め込み
+        self.nullButton1 = QPushButton("&NULL1")
+        self.nullButton1.clicked.connect(self.do_nothing)
+        self.nullButton2 = QPushButton("&NULL2")
+        self.nullButton2.clicked.connect(self.do_nothing)
         buttonLayout = QVBoxLayout()
-        buttonLayout.addWidget(self.drawingP)
+        buttonLayout.addWidget(self.nullButton1)
+        buttonLayout.addWidget(self.nullButton2)
+
+        # 文字列出力領域の埋め込み
+        #textLayout = QHBoxLayout
+        #textLayout.addWidget(QLabel("Text"))
+        #textLayout.addWidget(QLineEdit())
+
+        # BoxLayout
+        propertyLayout = QVBoxLayout()
+        propertyLayout.setAlignment(Qt.AlignTop)
+        propertyLayout.addLayout(buttonLayout)
+        #propertyLayout.addLayout(textLayout)
 
         mainLayout = QHBoxLayout()
-        mainLayout.addLayout(lineLayout)
-        mainLayout.addLayout(buttonLayout)
+        mainLayout.setAlignment(Qt.AlignTop)
+        mainLayout.addWidget(self.graphicsView)
+        mainLayout.addLayout(propertyLayout)
 
+        # その他処理
         self.setLayout(mainLayout)
-        self.setWindowTitle("Factorial")
+        self.setWindowTitle("Social Viewpoint Finder")
 
-    def calc(self):
-        n = int(self.inputLine.text())
-        r = 0
-        self.outputLine.setText(str(r))
+    # 関数定義
+    def do_nothing(self):
+        self.update()
+
+    def zero(self):
+        return 0
+
+
+    #def keyPressEvent(self,event)
+    #    key = event.key()
+
 
 if __name__ == '__main__':
     import sys
     app = QApplication(sys.argv)
-    main_window = MainWindow()
-
-    main_window.show()
+    mainWindow = MainWindow()
+    mainWindow.show()
     sys.exit(app.exec_())

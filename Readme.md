@@ -29,6 +29,15 @@ http://qiita.com/Algebra_nobu/items/fec5c97bfbd6c3ff1f00
 
 ## マウスイベント
 http://doc.qt.io/qt-5/qtquick-input-mouseevents.html
+http://d.hatena.ne.jp/mFumi/20141112/1415806010
 
 ## あとで読む
 http://bravo.hatenablog.jp/entry/2016/02/07/084048
+
+## effect, ellipseアイテム, メモ
+http://nullege.com/codes/show/src%40p%40y%40pyqt5-HEAD%40examples%40effects%40lighting.py/112/PyQt5.QtWidgets.QGraphicsRectItem.setGraphicsEffect/python
+
+pyqt8.py : Animation, effect, item (!IMPORTANT!)
+
+# QGraphics の話(重要)
+http://vivi.dyndns.org/vivi/docs/Qt/graphics.html

@@ -6,9 +6,9 @@ from PyQt5.QtWidgets import (QApplication, QWidget, QGraphicsView, QGraphicsScen
 import numpy as np
 from agiTest import AGI
 
-class CelllarAutomaton(QGraphicsItem):
+class AGIwindow(QGraphicsItem):
     def __init__(self, width=500,height=500,size=5):
-        super(CelllarAutomaton, self).__init__()
+        super(AGIwindow, self).__init__()
         agi = AGI(width, width-100, 2)
         print(agi.Pos_scaled)
         self.width = width
@@ -30,6 +30,14 @@ class CelllarAutomaton(QGraphicsItem):
         for n in self.node:
             painter.drawEllipse(*(n - 5),10,10)
 
+    """
+    def mousePressEvent(self, event):
+        pos = event.pos()
+        self.select(int(pos.x() / 100), int(pos.y() / 100))
+        self.update()
+        super(AGIwindow, self).mousePressEvent(event)
+    """
+
 class MainWindow(QWidget):
     def __init__(self,parent=None):
         super(MainWindow, self).__init__(parent)
@@ -39,7 +47,7 @@ class MainWindow(QWidget):
         scene = QGraphicsScene(self.graphicsView)
         scene.setSceneRect(0,0,800,800)
         self.graphicsView.setScene(scene)
-        self.graphDrawer = CelllarAutomaton(800,800)
+        self.graphDrawer = AGIwindow(800, 800)
         scene.addItem(self.graphDrawer)
 
         # パラメータ領域の埋め込み
