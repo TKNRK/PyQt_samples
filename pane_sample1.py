@@ -11,55 +11,65 @@ class agiWindow(QGraphicsView):
         self.m_scene = QGraphicsScene()
         self.setScene(self.m_scene)
 
-        agi = AGI(width, width-100, 2)
-        print(agi.Pos_scaled)
+        self.agi = AGI(width, width-100, 2)
         self.width = width
         self.height = height
         self.size = size
-        self.node = (agi.Pos_scaled).T
-        self.edge = agi.EdgeList
+        self.node = (self.agi.Pos_scaled).T
+        self.edge = self.agi.EdgeList
 
         self.lines = []
         self.ellipses = []
-        self.selected = 0
+        self.selected = False
+        self.selection = None
 
         self.setUp()
 
-    def setUp(self, ef = -1):
+    def setUp(self):
         self.m_scene.setSceneRect(0, 0, self.width, self.width)
-        self.counter = 0
+
+        for e in self.edge:
+            item = QGraphicsLineItem(*self.node[e[0]], *self.node[e[1]])
+            item.setPen(QPen(Qt.blue, 1))
+            self.m_scene.addItem(item)
+            self.lines.append(item)
 
         for n in self.node:
             item = QGraphicsEllipseItem(*n, 50, 50)
-
             item.setPen(QPen(Qt.black, 1))
             item.setBrush(QBrush(Qt.white))
-
-            if ef == self.counter:
-                effect = QGraphicsDropShadowEffect(self)
-                effect.setBlurRadius(8)
-                item.setGraphicsEffect(effect)
-                item.setZValue(1)
-
             self.m_scene.addItem(item)
             self.ellipses.append(item)
 
-
     def mousePressEvent(self, event):
-        self.selected = 1
-        print(self.ellipses)
+        for i in range(15):
+            if self.ellipses[i].isUnderMouse():
+                self.selection = i
+                self.selected = True
         super(agiWindow, self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
+        if self. selected:
+            pos = event.pos()
+            self.agi.node_update(pos.x(), pos.y(), self.selection)
+            self.m_scene.clear()
+            self.ellipses.clear()
+            self.lines.clear()
+            self.setUp()
+            super(agiWindow, self).mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
         pos = event.pos()
-        self.node[self.selected,:] = np.array([pos.x(),pos.y()])
+        self.agi.node_update(pos.x(),pos.y(),self.selection)
         self.m_scene.clear()
         self.ellipses.clear()
-        self.setUp(self.selected)
-        super(agiWindow, self).mouseMoveEvent(event)
+        self.lines.clear()
+        self.setUp()
+        self.selected = False
+        self.selection = None
 
 class ParamView(QGraphicsView):
-    def __init__(self, width=100,height=50,size=5):
+    def __init__(self, height=50,width=100,size=5):
         super(ParamView, self).__init__()
 
         self.p_scene = QGraphicsScene()
@@ -79,7 +89,7 @@ class ParamView(QGraphicsView):
         self.setUp()
 
     def setUp(self):
-        self.p_scene.setSceneRect(0, 0, 100, 50)
+        self.p_scene.setSceneRect(0, 0, self.height, self.width)
         self.counter = 0
         div = len(self.bars) - 1
         length = self.width / div
@@ -92,11 +102,10 @@ class ParamView(QGraphicsView):
             item = QGraphicsRectItem(pos_x,pos_y,length,vals_fixed[i])
 
             item.setPen(QPen(Qt.black, 1))
-            item.setBrush(QBrush(Qt.white))
+            item.setBrush(QBrush(Qt.green))
 
             self.p_scene.addItem(item)
             self.rects.append(item)
-
 
 class MainWindow(QWidget):
     def __init__(self,parent=None):
@@ -108,26 +117,29 @@ class MainWindow(QWidget):
         # パラメータ領域の埋め込み
         self.nullButton1 = QPushButton("&NULL1")
         self.nullButton1.clicked.connect(self.do_nothing)
-        self.paramView1 = ParamView()
+        self.paramView1 = ParamView(50,100)
         self.nullButton2 = QPushButton("&NULL2")
         self.nullButton2.clicked.connect(self.do_nothing)
-        self.paramView2 = ParamView()
-        buttonLayout = QVBoxLayout()
-        buttonLayout.addWidget(self.nullButton1)
-        buttonLayout.addWidget(self.paramView1)
-        buttonLayout.addWidget(self.nullButton2)
-        buttonLayout.addWidget(self.paramView2)
+        self.paramView2 = ParamView(50,100)
+        ParamLayout = QVBoxLayout()
+        ParamLayout.addWidget(self.nullButton1)
+        ParamLayout.addWidget(self.paramView1)
+        ParamLayout.addWidget(self.nullButton2)
+        ParamLayout.addWidget(self.paramView2)
 
         # 文字列出力領域の埋め込み
-        #textLayout = QHBoxLayout
-        #textLayout.addWidget(QLabel("Text"))
-        #textLayout.addWidget(QLineEdit())
+        self.outPutLine = QLineEdit()
+        self.outPutLine.setReadOnly(True)
+        self.outPutLine.setText("Show ClickedNodeID")
+        self.outPutLine.setText("Show Neighbors")
+        TextLayout = QVBoxLayout()
+        TextLayout.addWidget(self.outPutLine)
 
         # BoxLayout
         propertyLayout = QVBoxLayout()
         propertyLayout.setAlignment(Qt.AlignTop)
-        propertyLayout.addLayout(buttonLayout)
-        #propertyLayout.addLayout(textLayout)
+        propertyLayout.addLayout(ParamLayout)
+        propertyLayout.addLayout(TextLayout)
 
         mainLayout = QHBoxLayout()
         mainLayout.setAlignment(Qt.AlignTop)
@@ -138,16 +150,20 @@ class MainWindow(QWidget):
         self.setLayout(mainLayout)
         self.setWindowTitle("Social Viewpoint Finder")
 
-    # 関数定義
-    def do_nothing(self):
-        self.update()
-
-    def zero(self):
-        return 0
-
-
     #def keyPressEvent(self,event)
     #    key = event.key()
+
+    def closeEvent(self, event):
+        reply = QMessageBox.question(self, 'Message',
+                                     "Are you sure to quit?", QMessageBox.Yes |
+                                     QMessageBox.No, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
+
+    def do_nothing(self):
+        return 0
 
 
 if __name__ == '__main__':
