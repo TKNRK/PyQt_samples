@@ -59,14 +59,15 @@ class agiWindow(QGraphicsView):
             super(agiWindow, self).mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event):
-        pos = event.pos()
-        self.agi.node_update(pos.x(),pos.y(),self.selection)
-        self.m_scene.clear()
-        self.ellipses.clear()
-        self.lines.clear()
-        self.setUp()
-        self.selected = False
-        self.selection = None
+        if self.selected:
+            pos = event.pos()
+            self.agi.node_update(pos.x(), pos.y(), self.selection)
+            self.m_scene.clear()
+            self.ellipses.clear()
+            self.lines.clear()
+            self.setUp()
+            self.selected = False
+            self.selection = None
 
 class ParamView(QGraphicsView):
     def __init__(self, height=50,width=100,size=5):
@@ -80,8 +81,11 @@ class ParamView(QGraphicsView):
         self.width = width
         self.height = height
         self.size = size
-        self.vals = np.array([1.2,0.3,4.0,2.8])
-        self.bars = np.array([0,1,2,3,4])
+        self.vals = np.arange(10)
+        self.bars = np.arange(10)
+        self.b1 = 0
+        self.b2 = len(self.bars) - 1
+        self.div = len(self.bars) - 1
         
         self.lines = []
         self.rects = []
@@ -90,22 +94,39 @@ class ParamView(QGraphicsView):
 
     def setUp(self):
         self.p_scene.setSceneRect(0, 0, self.height, self.width)
-        self.counter = 0
-        div = len(self.bars) - 1
-        length = self.width / div
+        length = self.width / self.div
         # min > 0 の場合のみ考えている
         vals_fixed = self.vals / max(self.vals) * 40
 
-        for i in range(div):
+        self.b1 = 2
+        self.b2 = 6
+
+        for i in range(self.div):
             pos_x = 10 + length*(i-1)
             pos_y = 5 + (40 - vals_fixed[i])
             item = QGraphicsRectItem(pos_x,pos_y,length,vals_fixed[i])
+            item.setPen(QPen(Qt.white, 1))
 
-            item.setPen(QPen(Qt.black, 1))
-            item.setBrush(QBrush(Qt.green))
+            if self.b1 <= i and i<= self.b2:
+                item.setBrush(QBrush(Qt.black))
+            else:
+                item.setBrush((QBrush(Qt.gray)))
 
             self.p_scene.addItem(item)
             self.rects.append(item)
+
+    def mousePressEvent(self, event):
+        for i in range(self.div):
+            if self.rects[i].isUnderMouse():
+                if i <= self.b1: self.b1 = i
+                else : self.b2 = i
+                print("clicked")
+        print(self.b1)
+        print(self.b2)
+        self.p_scene.clear()
+        self.rects.clear()
+        self.setUp()
+        super(ParamView, self).mousePressEvent(event)
 
 class MainWindow(QWidget):
     def __init__(self,parent=None):
