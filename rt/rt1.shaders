@@ -1,0 +1,31 @@
+# vertex shader
+# version 410 core
+
+in vec3 VertexInitVel;
+
+uniform float t;
+uniform vec3 Gravity = vec3(0.0, -0.01, 0.0);
+
+void main(void) {
+
+  const vec4 vertices[3] = vec4[3](
+      vec4( 0.25, -0.25, 0.5, 1),
+      vec4(-0.25, -0.25, 0.5, 1),
+      vec4( 0.00,  0.25, 0.5, 1));
+
+  vec3 pos = VertexInitVel * t + Gravity * t * t;
+
+  gl_Position = vertices[gl_VertexID] + vec4(pos, 0);
+
+}
+
+# fragment shader
+# version 410 core
+
+uniform vec2 color_u;
+out vec4 color_fb;
+
+void main(void) {
+  //color_fb = vec4(color_u, 1, 1);
+  color_fb = vec4(.5, .5, 1, 1);
+}

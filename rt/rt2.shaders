@@ -1,0 +1,27 @@
+# vertex shader
+# version 430
+
+in vec3 position_vs;
+
+uniform float t;
+uniform vec3 Gravity = vec3(0.0,0.0,0.0);
+uniform float pointsize;
+
+void main() {
+
+  vec3 pos = (position_vs * t + Gravity * t * t) * 0.5;
+
+  gl_Position = vec4(pos, 0);
+  gl_PointSize = pointsize;
+ }
+
+# fragment shader
+# version 430
+
+uniform vec2 color_u;
+out vec4 color_fb;
+
+void main(void) {
+  //color_fb = vec4(color_u, 1, 1);
+  color_fb = vec4(.5, .5, 1, 1);
+}

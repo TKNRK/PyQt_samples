@@ -2,6 +2,7 @@
 
 ## 基本的な QWidgetの機能
 http://zetcode.com/gui/pyqt5/firstprograms/
+http://zetcode.com/gui/pyqt5/widgets/ (重要)
 
 pyqt1.py : Empty Window
 

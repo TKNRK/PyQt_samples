@@ -1,0 +1,48 @@
+# vertex shader
+# version 430
+
+layout (location = 0) in vec3 VertexInitVel;
+layout (location = 1) in float StartTime;
+
+out float Transp;
+
+uniform float pointsize;
+uniform float Time;
+uniform vec3 Gravity = vec3(0.0,-0.05,0.0);
+uniform float ParticleLifetime;
+
+uniform mat4 MV;
+uniform mat4 P;
+
+void main()
+{
+	vec3 pos = vec3(0.0);
+	Transp = 0.0;
+
+	if( Time > StartTime ) {
+	    float t = Time - StartTime;
+
+	    if( t < ParticleLifetime) {
+	        pos = VertexInitVel * t + Gravity * t * t;
+	        Transp = 1.0 - t / ParticleLifetime;
+	    }
+	}
+
+    vec4 p_mv = MV * vec4(pos, 1.0);
+    gl_Position = P * p_mv
+    glPointSize = pointsize
+}
+
+# fragment shader
+# version 430
+
+in float Transp;
+uniform sampler2D ParticleTex;
+
+layout ( location = 0 ) out vec4 FragColor;
+
+void main()
+{
+	FragColor = texture(ParticleTex, gl_PointCoord);
+	FragColor.a *= Transp;
+}
