@@ -1,38 +1,30 @@
 # vertex shader
 # version 430
 
-uniform mat4 MV;
-uniform mat4 P;
+// uniform mat4 MV;
+// uniform mat4 P;
 uniform float pointsize;
 
 uniform float t;
-uniform vec3 Gravity = vec3(0.0, 0.0, 0.0);
+uniform vec3 Gravity = vec3(0.0, -0.05, 0.0);
 
 layout (location=0) in vec3 position_vs;
 
-flat out int   vertexID_fs;
-flat out float vertexZ_fs;
-
 void main() {
-  float tm = t - 2.0;
-  vec3 pos = position_vs * tm + Gravity * tm * tm;
+  float time = t - 1.0;
+  vec3 pos = position_vs * time + Gravity * time * time;
   vec4 p = vec4(pos, 1);
+  gl_Position = p;
 
-  vec4 p_mv = MV * p;
-  gl_Position = P * p_mv;
+  // vec4 p_mv = MV * p;
+  // gl_Position = P * p_mv;
 
-  gl_PointSize = pointsize / (-p_mv.z);
+  gl_PointSize = pointsize; // (-p_mv.z);
 
-  vertexID_fs = gl_VertexID;
-  vertexZ_fs  = p_mv.z;
 }
 
 # fragment shader
 # version 430
-
-layout (origin_upper_left) in vec4 gl_FragCoord;
-flat in int   vertexID_fs;
-flat in float vertexZ_fs;
 
 out vec4 color_fb;
 

@@ -15,20 +15,15 @@ import sn.gl.geometry.t3d as T
 
 import sn.gl.debug
 
-
 sn.gl.debug.logOnShaderVariables(True)
 
-
-class RT3(Demo):
+class RT5(Demo):
 
     def __init__(self, W):
         super().__init__(W)
         self.should_handle_mouse_click = False
-
         s = self.S = 5
-        #vvals = np.array(range(s)) * 2. / (s - 1) - 1.
-        self.points = points = [((random()**2 - 0.5)*0.5, random()**2 * 10, 0) for i in range(s ** 3)]
-        #self.points = points = [(x, y, z) for x in vvals for y in vvals for z in vvals]
+        self.points = points = [(0.0,3.0,0.0),(1.0,2.0,1.0),(2.0,1.0,2.0)]
 
     def minimumSizeHint(self): return QtCore.QSize(600, 600)
 
@@ -38,20 +33,21 @@ class RT3(Demo):
 
     def initializeGL(self):
         points = self.points
-        super().initializeGL('rt3.shaders', lambda program: Points(program, points))
+        super().initializeGL('rt5.shaders', lambda program: Points(program, points))
 
-        #eye, target, up = T.vec3(0, 0, 3), T.vec3(0, 0, 0), T.vec3(0, 1, 0)
-        #self.View = T.lookat(eye, target, up)
+        eye, target, up = T.vec3(0, 0, 50), T.vec3(0, 0, 0), T.vec3(0, 1, 0)
+        self.View = T.lookat(eye, target, up)
 
-        for p in [GL_VERTEX_PROGRAM_POINT_SIZE, GL_CLIP_PLANE0, GL_BLEND]:
+        for p in [GL_VERTEX_PROGRAM_POINT_SIZE, GL_BLEND]:
             glEnable(p)
         self.program.u['pointsize'](100 / self.S)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
     def paintGL(self):
         super().paintGL()
-        t = Time.time
+        t = Time.time % 3.0;
+        assert (t >= 0 and t < 3.0)
         self.program.u['t'](t)
 
 if __name__ == '__main__':
-    RT3.start(RT3)
+    RT5.start(RT5)
