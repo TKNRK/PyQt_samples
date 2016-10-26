@@ -9,6 +9,13 @@ uniform float t;
 uniform vec3 Gravity = vec3(0.0, -0.05, 0.0);
 
 out float Transp;
+out vec4 color_fs;
+
+const int P1 = 15485863, P2 = 32452843;
+const int N_COLORS = 6;
+const vec4 colors[] = vec4[](
+    vec4(0, 0, 1, 1), vec4(0, 1, 0, 1), vec4(0, 1, 1, 1),
+    vec4(1, 0, 0, 1), vec4(1, 0, 1, 1), vec4(1, 1, 0, 1));
 
 in vec3 position_vs;
 // in vec2 delay;
@@ -17,9 +24,9 @@ void main() {
   // float time = t - delay.x;
   float time = t - position_vs.z;
 
-  if (time < 0) time = 3.0 + time;
+  if (time < 0) time = 10.0 + time;
 
-  Transp = 1.0 - time / 3.0;
+  Transp = 1.0 - time / 10.0;
 
   vec3 pos = vec3(position_vs.x,position_vs.y,0.0) * time + Gravity * time * time;
   // vec3 pos = position_vs * time + Gravity * time * time;
@@ -29,18 +36,23 @@ void main() {
   gl_Position = P * p_mv;
 
   gl_PointSize = pointsize; // (-p_mv.z);
+
+  color_fs = colors[(gl_VertexID + P1) * P2 % N_COLORS];
 }
 
 # fragment shader
 # version 430
 
-out vec4 color_fb;
 in float Transp;
+
+in vec4 color_fs;
+out vec4 color_fb;
 
 void main() {
   vec3 normal = vec3(gl_PointCoord * 2.0 - 1.0, 0);
   normal.z = 1.0 - dot(normal.xy, normal.xy);
   if (normal.z < 0) discard;
 
-  color_fb = vec4(vec3(sqrt(normal.z)) * 0.6, Transp) + vec4(0.1, 1, 1, 1) * 0.5;
+  // color_fb = vec4(vec3(sqrt(normal.z)) * 0.6, Transp) + color_fs * 0.5;
+  color_fb = vec4(vec3(sqrt(normal.z)) * 0.6, Transp) + vec4(0,1,1,1) * 0.5;
 }

@@ -4,7 +4,7 @@ from ctypes import *
 import sys
 from time import time
 from random import random
-from sb03 import *
+# from sb03 import *
 
 from PyQt5 import QtCore, QtGui
 from sn.gl import *
@@ -22,8 +22,8 @@ class RT4(Demo):
     def __init__(self, W):
         super().__init__(W)
         self.should_handle_mouse_click = False
-        s = self.S = 3
-        self.points = points = [((random()**2 - 0.5), random()**2 * 3, (i*3.0)/(s**3)) for i in range(s ** 3)]
+        s = self.S = 200
+        self.points = points = [((random()**2 - 0.5) * 4, (random()**2 * 0.8 + 0.2) * 5, (i*10.0)/(s**3)) for i in range(s ** 3)]
         # self.delays = np.arange(125 * 2) / 249.0 * 3.0
 
     def minimumSizeHint(self): return QtCore.QSize(600, 600)
@@ -51,6 +51,7 @@ class RT4(Demo):
         self.View = T.lookat(eye, target, up)
 
         #for p in [GL_VERTEX_PROGRAM_POINT_SIZE, GL_CLIP_PLANE0, GL_BLEND]:
+        glDisable(GL_DEPTH_TEST)
         for p in [GL_VERTEX_PROGRAM_POINT_SIZE, GL_BLEND]:
             glEnable(p)
         self.program.u['pointsize'](50 / self.S)
@@ -58,9 +59,9 @@ class RT4(Demo):
 
     def paintGL(self):
         super().paintGL()
-        t = Time.time % 3.0;
-        assert (t >= 0 and t < 3.0)
+        t = Time.time % 10.0;
+        assert (t >= 0 and t < 10.0)
         self.program.u['t'](t)
 
 if __name__ == '__main__':
-    RT4.start(RT4)
+    RT4.start(RT4, fullscreen=True)
